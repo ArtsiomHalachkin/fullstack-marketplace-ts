@@ -1,0 +1,39 @@
+{
+  "name": "notification-service",
+  "version": "1.0.0",
+  "main": "src/app.ts",
+  "scripts": {
+    "start": "vite-node src/app.ts",
+    "test": "vitest --no-file-parallelism"
+    
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@node-oauth/express-oauth-server": "github:node-oauth/express-oauth-server",
+    "axios": "^1.13.2",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.14.3",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^5.2.1",
+    "mongodb": "^6.20.0",
+    "nodemailer": "^7.0.12",
+    "reflect-metadata": "^0.2.2",
+    "supertest": "^7.1.4",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1",
+    "vite": "^7.2.2",
+    "vite-node": "^3.2.4"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.3",
+    "@types/node": "^24.7.2",
+    "@types/swagger-jsdoc": "^6.0.4",
+    "@types/swagger-ui-express": "^4.1.8",
+    "vitest": "^4.0.1"
+  }
+}

@@ -1,0 +1,129 @@
+version: '3.8'
+
+services:
+  mongo:
+    image: mongo:latest
+    ports:
+      - "27018:27017"
+    volumes:
+      - marketplace-mongo:/data/db
+    networks:
+      - mongo-net
+
+  # --- Front End ---
+  frontend:
+    build:
+      context: frontend/vue-marketplace
+      args:
+        VITE_BACKEND_URL: http://localhost:5001
+        VITE_PRODUCT_API_URL: http://localhost:5002
+        VITE_ORDERS_SERVICE_URL: http://localhost:5003
+        VITE_USER_SERVICE_URL: http://localhost:5001
+        VITE_KEYCLOAK_BASE_URL: http://localhost:8091
+        VITE_KEYCLOAK_REALM: MARKETPLACE-APP
+        VITE_KEYCLOAK_CLIENT_ID: web-app
+    
+    
+    ports:
+      - "5000:4173"
+    networks:
+      - mongo-net
+
+  # --- Product Service ---
+  product_service:
+    build:
+      context: product-service
+    ports:
+      - "5002:3000"
+    environment:
+      - MONGO_URL=mongodb://mongo:27017/product-db
+      - CORS_ORIGIN=http://localhost:5000
+      # ADDED: Auth Configuration
+      - KEYCLOAK_BASE_URL=http://keycloak:8080
+      - KEYCLOAK_ISSUER_URL=http://localhost:8091
+      - KEYCLOAK_REALM=MARKETPLACE-APP
+      - KEYCLOAK_CLIENT_ID=web-app
+    depends_on:
+      - mongo
+      - keycloak
+    networks:
+      - mongo-net
+
+  # --- Order Service ---
+  order_service:
+    build:
+      context: order-service
+    ports:
+      - "5003:3000"
+    environment:
+      - MONGO_URL=mongodb://mongo:27017/order-db
+      - PRODUCT_SERVICE_URL=http://product_service:3000
+      - CORS_ORIGIN=http://localhost:5000
+      # ADDED: Auth Configuration
+      - KEYCLOAK_BASE_URL=http://keycloak:8080
+      - KEYCLOAK_ISSUER_URL=http://localhost:8091
+      - KEYCLOAK_REALM=MARKETPLACE-APP
+      - KEYCLOAK_CLIENT_ID=web-app
+    depends_on:
+      - mongo
+      - keycloak
+    networks:
+      - mongo-net
+
+  # --- Payment Service ---
+  payment_service:
+    build:
+      context: payment-service
+    ports:
+      - "5004:3000"
+    environment:
+      - MONGO_URL=mongodb://mongo:27017/payment-db
+      - CORS_ORIGIN=http://localhost:5000
+      - ORDER_SERVICE_URL=http://order_service:3000
+      - PRODUCT_SERVICE_URL=http://product_service:3000
+      - NOTIFICATION_SERVICE_URL=http://notification_service:5005
+      - AUTH_SERVICE_URL=http://user-service:3000
+
+      - KEYCLOAK_BASE_URL=http://keycloak:8080
+      - KEYCLOAK_ISSUER_URL=http://localhost:8091
+      - KEYCLOAK_REALM=MARKETPLACE-APP
+      - KEYCLOAK_CLIENT_ID=web-app
+    depends_on:
+      - mongo
+      - keycloak
+    networks:
+      - mongo-net
+
+  # --- Auth Service ---
+  keycloak:
+    image: quay.io/keycloak/keycloak:latest
+    command: start-dev
+    ports:
+      - "8091:8080"
+    environment:
+      - KEYCLOAK_ADMIN=admin
+      - KEYCLOAK_ADMIN_PASSWORD=1234
+    volumes:
+      - keycloak-data:/opt/keycloak/data
+    networks:
+      - mongo-net
+  notification_service:
+    build: 
+      context: notification-service
+    ports:
+      - "5005:5005"
+    environment:
+      - PORT=5005
+      - SMTP_HOST=sandbox.smtp.mailtrap.io
+      - SMTP_PORT=2525
+      - SMTP_USER=880abbcba028a0
+      - SMTP_PASS=f6815de5f3d35d
+    networks:
+      - mongo-net
+
+volumes:
+  marketplace-mongo:
+  keycloak-data:
+
+networks:
+  mongo-net:
